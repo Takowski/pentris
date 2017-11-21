@@ -127,6 +127,8 @@ public class PentrisBoard {
 		board=newBoard;
 	}
 
+    /* This method has bugs, sometime it erases the already
+     placed shapes */
 	public boolean isRotatePossible(Shape shape, int x, int y) {
 
 		boolean isPossible=true;
@@ -141,6 +143,9 @@ public class PentrisBoard {
 			return isPossible;
 		}
 
+    /* This method has bugs, sometime it erases the already
+    placed shapes */
+
 	public boolean isMoveLeftPossible(Shape shape, int x, int y) {
 		for(int i=0; i<shape.getShape().length; i++) {
 
@@ -152,6 +157,8 @@ public class PentrisBoard {
 		}
 		return true;
 	}
+  /* This method has bugs, sometime it erases the already
+   placed shapes */
 
 	public boolean isMoveRightPossible(Shape shape, int x, int y) {
 		boolean isPossible=true;
