@@ -6,14 +6,14 @@ import java.io.*;
 public class HighScoreManager{
 	//Arraylist with scores from Score class
 	private ArrayList<Score> scores;
-	
+
 	//Where the highscores are saved
 	private static final String SCORE_FILE = "scores.dat";
-	
+
 	//In and output stream for working with the file
 	ObjectOutputStream outputStream = null;
 	ObjectInputStream inputStream = null;
-	
+
 	public HighScoreManager(){
 		//Here the arraylist is initialized
 		scores = new ArrayList<Score>();
@@ -24,7 +24,7 @@ public class HighScoreManager{
 		sort();
 		return scores;
 	}
-	//Creates a new object "comparator" from CompareScores class, and sorts the arraylist 
+	//Creates a new object "comparator" from CompareScores class, and sorts the arraylist
 	private void sort(){
 		CompareScores comparator = new CompareScores();
 		Collections.sort(scores, comparator);
@@ -93,10 +93,10 @@ public class HighScoreManager{
 	public String getHighscoreString(){
 		String highscoreString = "";
 		int max = 10;
-		
+
 		ArrayList<Score> scores;
 		scores = getScores();
-		
+
 		int i = 0;
 		int x = scores.size();
 		if(x > max){
@@ -107,5 +107,9 @@ public class HighScoreManager{
 			i++;
 		}
 		return highscoreString;
+	}
+	public int getHighScore(){
+		int highScore = scores.get(0).getScore();
+		return highScore;
 	}
 }

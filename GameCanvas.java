@@ -14,12 +14,14 @@ class GameCanvas extends PentPanel implements ActionListener {
 
     private ShapeBox shapeBox;
     private TextBox timeBox;
-	 private TextBox scoreBox;
+	 	private TextBox scoreBox;
+	 	private TextBox highScoreBox;
     private Timer timer;
     private ArrayList<ScoreBox> scoreBoxes= new ArrayList<ScoreBox>();
 
     private Random random = new Random();
     private int time =0;
+		private HighScoreManager hm;
 
 	 String[][] b = {
         {"-","-","-","-","-"},
@@ -179,9 +181,9 @@ class GameCanvas extends PentPanel implements ActionListener {
 
 
         //create score boxes
-        TextBox highScoreBox = new TextBox((SQ*23)/2, SQ*6, font, SQ, "High Score");
         TextBox levelBox = new TextBox(SQ/2, SQ*7, font, SQ, "Level");
-		  scoreBox = new TextBox(SQ/2, SQ*4, font, SQ, "Score");
+				highScoreBox = new TextBox((SQ*23)/2, SQ*6, font, SQ, "High Score");
+		  	scoreBox = new TextBox(SQ/2, SQ*4, font, SQ, "Score");
         timeBox = new TextBox(SQ/2, SQ, font, SQ, "Time");
         shapeBox = new ShapeBox((SQ*23)/2, SQ, font, SQ, "Next Shape",nextShape);
 
@@ -192,6 +194,8 @@ class GameCanvas extends PentPanel implements ActionListener {
         //scoreBoxes.add(shapeBox);
 
         add(shapeBox);
+				hm = new HighScoreManager();
+				highScoreBox.setTarget(hm.getHighScore());
 
         for(ScoreBox box : scoreBoxes) {
             add(box);
@@ -230,6 +234,7 @@ class GameCanvas extends PentPanel implements ActionListener {
 
 	 private void gameOver(){
 		 runtime.stop();
+		 hm.addScore("", score);
 		 System.out.println("Game over...");
 	 }
 }
