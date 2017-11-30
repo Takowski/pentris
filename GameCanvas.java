@@ -14,43 +14,32 @@ class GameCanvas extends PentPanel implements ActionListener {
 	private ShapeBox shapeBox;
 	private TextBox timeBox;
 	private TextBox scoreBox;
+	private TextBox highScoreBox;
 	private Timer timer;
 	private ArrayList<ScoreBox> scoreBoxes= new ArrayList<ScoreBox>();
+	private boolean isGameOver = false;
 
 	private Random random = new Random();
 	private int time = 0;
 
-	 String[][] b = {
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-		{"-","-","-","-","-"},
-	};
-
-	public PentrisBoard board = new PentrisBoard(b);
+	public PentrisBoard board = new PentrisBoard();
 
 	public Shape activeShape;
 	public Shape nextShape;
 	public ShapeList shapeList;
 	public Timer runtime;
+	private Timer scoreTimer;
 
 	 private int speedDefault = 600;
 	 private int speedUp = 100;
 	 private int x=0;
 	 private int y=0;
 	 private int score = 0;
+	 private int scoreTarget = 0;
+	 private final int SECOND = 1000;
 	 private HashMap<String, Color> colorList;
+	 private HighScoreManager hm;
+	 private int highScore;
 
 	public GameCanvas(int W, int H,  Font f, int s) {
 		super(W, H, f, s, 0, 0);
@@ -60,6 +49,12 @@ class GameCanvas extends PentPanel implements ActionListener {
 		colorList = new PentColors();
 		drawGame();
 		startGame();
+		hm = new HighScoreManager();
+		ArrayList<Score> sList = hm.getScores();
+		Score hScore = sList.get(0);
+		highScore = hScore.getScore();
+		highScoreBox.setTarget(highScore);
+		highScoreBox.setValue(highScore);
 	}
 
 	@Override
@@ -78,35 +73,35 @@ class GameCanvas extends PentPanel implements ActionListener {
 		if(activeShape.getHeight()>activeShape.getWidth()) activeShape.rotateR();
 		if(!board.addShapeToBoard(activeShape)) gameOver();
 		drawBoard(board);
-		
+		shapeBox.drawValue(nextShape);
+
 		class ActionTick implements ActionListener{
 			public void actionPerformed(ActionEvent e) {
 				//shape is touching another shape
 				if(board.isPlaced(activeShape,x,y)) {
-					if(y==0) 
-						gameOver();
-					else
-						activeShape = nextShape;
-						nextShape = shapeList.getRandomShape();
-						shapeBox.drawValue(nextShape);
-						if(activeShape.getHeight()> activeShape.getWidth()) activeShape.rotateR();
-						x=0;
-						y=0;
-          	switch(board.breakLines()){
-						  case 1: score += 10;
-						  break;
-						  case 2: score += 30;
-						  break;
-						  case 3: score += 50;
-						  break;
-						  case 4: score += 70;
-						  break;
-						  case 5: score += 90;
-						  break;
+					if(y==0) gameOver();
+					activeShape = nextShape;
+					nextShape = shapeList.getRandomShape();
+					shapeBox.drawValue(nextShape);
+					if(activeShape.getHeight()> activeShape.getWidth()) activeShape.rotateR();
+					x=0;
+					y=0;
+          			switch(board.breakLines()){
+					  case 1: scoreTarget = 10 + score;
+					  break;
+					  case 2: scoreTarget = 30 + score;
+					  break;
+					  case 3: scoreTarget = 50 + score;
+					  break;
+					  case 4: scoreTarget = 70 + score;
+					  break;
+					  case 5: scoreTarget = 90 + score;
+					  break;
 				  	}
-						scoreBox.setTarget(score);
-						if(!board.addShapeToBoard(activeShape)) gameOver();
-				} else {
+					if(scoreTarget-score>0)scoreTimer.setDelay(SECOND/((scoreTarget-score)));
+					if(!board.addShapeToBoard(activeShape)) gameOver();
+				}
+				else {
 					board.moveDown(activeShape,x,y);
 					y++;
 				}
@@ -114,12 +109,28 @@ class GameCanvas extends PentPanel implements ActionListener {
 			}
 		}
 		ActionTick gameTick = new ActionTick();
+		class ScoreTick implements ActionListener{
+			public void actionPerformed(ActionEvent e2){
+				if(scoreTarget > score){
+					score++;
+					scoreBox.setTarget(score);
+					scoreBox.setValue(score);
+					if(score>highScore){
+						highScoreBox.setTarget(score);
+						highScoreBox.setValue(score);
+					}
+				}
+			}
+		}
+		ScoreTick scoreTick = new ScoreTick();
+		scoreTimer = new Timer(SECOND, scoreTick);
 
 		runtime = new Timer(speedDefault,gameTick);
 
-		timer = new Timer(1000, this);
+		timer = new Timer(SECOND, this);
 		timer.start();
 	   	runtime.start();
+		scoreTimer.start();
 	}
 
 	@Override
@@ -129,8 +140,10 @@ class GameCanvas extends PentPanel implements ActionListener {
 	}
 
 	public void upKeyPress() {
-		  if(board.isRotatePossible(activeShape,x,y))board.rotate(activeShape,x,y);
-		  drawBoard(board);
+		if(!isGameOver && board.rotatePossible(activeShape,x,y)){
+		  	board.rotate(activeShape,x,y);
+		}
+		drawBoard(board);
 	}
 
 	public void downKeyPress() {
@@ -153,14 +166,14 @@ class GameCanvas extends PentPanel implements ActionListener {
 	}
 
     public void leftKeyPress() {
-         if(board.moveLeftPossible(activeShape, x, y)) {
-		  		board.moveLeft(activeShape,x,y);
-		  		x--;
-			}
-		   drawBoard(board);
+        if(!isGameOver && board.moveLeftPossible(activeShape, x, y)) {
+			board.moveLeft(activeShape,x,y);
+		  	x--;
+		}
+		drawBoard(board);
     }
     public void rightKeyPress() {
-		 	if(board.moveRightPossible(activeShape, x, y)) {
+		 	if(!isGameOver && board.moveRightPossible(activeShape, x, y)) {
         		board.moveRight(activeShape,x,y);
 		  		x++;
 	  		}
@@ -192,8 +205,8 @@ class GameCanvas extends PentPanel implements ActionListener {
 
 
 		//create score boxes
-		TextBox highScoreBox = new TextBox((SQ*23)/2, SQ*6, font, SQ, "High Score");
 		TextBox levelBox = new TextBox(SQ/2, SQ*7, font, SQ, "Level");
+		highScoreBox = new TextBox((SQ*23)/2, SQ*6, font, SQ, "High Score");
 		scoreBox = new TextBox(SQ/2, SQ*4, font, SQ, "Score");
 		timeBox = new TextBox(SQ/2, SQ, font, SQ, "Time");
 		shapeBox = new ShapeBox((SQ*23)/2, SQ, font, SQ, "Next Shape",nextShape);
@@ -251,5 +264,7 @@ class GameCanvas extends PentPanel implements ActionListener {
 		 activeShape = null;
 		 timer.stop();
 		 System.out.println("Game over...");
+		 isGameOver = true;
+		 if(score>highScore)hm.addScore("me",scoreTarget);
 	 }
 }

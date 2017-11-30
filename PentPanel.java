@@ -52,11 +52,11 @@ public class PentPanel extends JPanel {
         for (int i=0; i<stringShape.length; i++) {
             for (int j=0; j<stringShape[0].length; j++) {
                 if(stringShape[i][j] != "-")
-                    drawBlock(g, i*s+x, j*s+y, colorList.get(stringShape[i][j]), s);
+                    drawBlock(g, j*s+x, i*s+y, colorList.get(stringShape[i][j]), s);
             }
         }
     }
-    
+
 	public void upKeyPress() {}
     public void downKeyPress() {}
     public void spaceKeyPress() {}

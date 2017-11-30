@@ -35,6 +35,10 @@ public class TextBox extends ScoreBox {
         repaint();
         g.dispose();
     }
+	public void setValue(int v){
+		value = v;
+		drawValue();
+	}
 
     public void addToTarget(int a) {
         target += a;
