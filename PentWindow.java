@@ -39,7 +39,7 @@ public class PentWindow extends JFrame{
         setSize(W, H);
         setTitle("Pentris");
         setMinimumSize(new Dimension(W,H));
-        setResizable(false);
+        setResizable(true);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         createKeyInput();
 
