@@ -20,7 +20,7 @@ class GameCanvas extends PentPanel implements ActionListener {
 	private Random random = new Random();
 	private int time = 0;
 
-	public PentrisBoard board = new PentrisBoard();
+	public PentrisBoard board;
 
 	private Shape activeShape;
 	private Shape nextShape;
@@ -32,12 +32,13 @@ class GameCanvas extends PentPanel implements ActionListener {
 	private int x=0;
 	private int y=0;
 	private int score = 0;
+	private int[] grid;
 	private boolean gameRunning = false;
 
-
-	public GameCanvas(int W, int H,  Font f, int s) {
+	public GameCanvas(int W, int H,  Font f, int s, int[] grid) {
 		super(0, 0, W, H, f, s);
-
+		this.grid = grid;
+		board = new PentrisBoard(grid);
 		shapeList = new ShapeList();
 		activeShape = shapeList.getRandomShape();
 		nextShape = shapeList.getRandomShape();
@@ -90,6 +91,10 @@ class GameCanvas extends PentPanel implements ActionListener {
 			drawBoard(board);
 			repaint();
 		}
+	}
+
+	public Boolean isRunning() {
+		return gameRunning;
 	}
 
 	public void upKeyPress() {
@@ -149,34 +154,35 @@ class GameCanvas extends PentPanel implements ActionListener {
 
 
 		//'origin' x and y positions to draw the board from.
-		int ox = (w-SQ*5)/2;
+		int ox = (w-SQ*grid[0])/2;
 		int oy = SQ;
 
 		//draw border of board
-		for(int y=-1; y<16; y++) {
+		for(int y=-1; y<(grid[1]+1); y++) {
 			drawBlock(g, ox - SQ, oy + SQ * y, BACKGROUND, SQ);
-			drawBlock(g, ox + 5 * SQ, oy + SQ * y, BACKGROUND, SQ);
+			drawBlock(g, ox + grid[0] * SQ, oy + SQ * y, BACKGROUND, SQ);
 		}
 
-		for(int x=0; x<5; x++) {
+		for(int x=0; x<(grid[0]); x++) {
 			drawBlock(g, ox + SQ * x, oy - SQ, BACKGROUND, SQ);
-			drawBlock(g, ox + SQ * x, oy + 15 * SQ, BACKGROUND, SQ);
+			drawBlock(g, ox + SQ * x, oy + grid[1] * SQ, BACKGROUND, SQ);
 		}
 
 
 		//create score boxes
-		TextBox highScoreBox = new TextBox((SQ*23)/2, SQ*6, font, SQ, "High Score");
-		TextBox levelBox = new TextBox(SQ/2, SQ*7, font, SQ, "Level");
-		scoreBox = new TextBox(SQ/2, SQ*4, font, SQ, "Score");
-		timeBox = new TimeBox(SQ/2, SQ, font, SQ, "Time");
-		shapeBox = new ShapeBox((SQ*23)/2, SQ, font, SQ, "Next Shape", nextShape);
+		TextBox highScoreBox = new TextBox(w - ((int) (SQ*3.5)), SQ*6, font, SQ, "High Score", this);
+		shapeBox = new ShapeBox(w - ((int) (SQ*3.5)), SQ, font, SQ, "Next Shape", nextShape, this);
+
+		scoreBox = new TextBox(SQ/2, SQ*4, font, SQ, "Score", this);
+		timeBox = new TimeBox(SQ/2, SQ, font, SQ, "Time", this);
+		//TextBox levelBox = new TextBox(SQ/2, SQ*7, font, SQ, "Level", this);
 
 		scoreBoxes.add(scoreBox);
-		scoreBoxes.add(levelBox);
+		//scoreBoxes.add(levelBox);
 		scoreBoxes.add(highScoreBox);
 
 		add(highScoreBox);
-		add(levelBox);
+		//add(levelBox);
 		add(scoreBox);
 		add(timeBox);
 		add(shapeBox);
@@ -189,12 +195,12 @@ class GameCanvas extends PentPanel implements ActionListener {
 
 	private void drawBoard(PentrisBoard pBoard) {
 
-		int ox = (w-SQ*5)/2;
+		int ox = (w-SQ*grid[0])/2;
 		int oy = SQ;
 
 		Graphics g = image.getGraphics();
 		g.setColor(BACKGROUND);
-		g.fillRect(ox,oy,SQ*5,SQ*15);
+		g.fillRect(ox,oy,SQ*grid[0],SQ*grid[1]);
 
 		String[][] board = pBoard.getBoard();
 
@@ -227,8 +233,7 @@ class GameCanvas extends PentPanel implements ActionListener {
 	 	gameRunning = false;
 		activeShape = null;
 		timer.stop();
-		String name = JOptionPane.showInputDialog(this,"Enter Your Name: ");
 		PentWindow p = (PentWindow)SwingUtilities.getRoot(this);
-		p.endGame(name, getScore());
+		p.endGame(getScore());
 	}
 }
