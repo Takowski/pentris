@@ -15,12 +15,14 @@ public class ScoreBox extends PentPanel implements ActionListener{
 
     protected String title, text;
     protected BufferedImage image;
+    protected GameCanvas parent;
 
-	public ScoreBox(int x, int y, Font f, int s, String t, int w, int h, int time) {
+	public ScoreBox(int x, int y, Font f, int s, String t, int w, int h, int time, GameCanvas g) {
         super(x, y, w, h, f, s);
         image = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
         title = t;
         drawIntial();
+        parent = g;
         if(time != 0) {
             Timer timer = new Timer(time, this);
             timer.start();
@@ -35,12 +37,12 @@ public class ScoreBox extends PentPanel implements ActionListener{
 
         g.setColor(BACKGROUND);
         g.fillRect(3,3,w-6,h-6);
-
-        g.setFont(font.deriveFont(10f));
+        float fontSize = SQ/4;
+        g.setFont(font.deriveFont(fontSize));
         g.setColor(Color.white);
 
         int textWidth = g.getFontMetrics().stringWidth(title);
-        g.drawString(title, (w-textWidth)/2, 25);
+        g.drawString(title, (w-textWidth)/2, 10 + g.getFontMetrics().getHeight());
         repaint();
         g.dispose();
     }
@@ -54,7 +56,7 @@ public class ScoreBox extends PentPanel implements ActionListener{
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if(!((PentWindow)SwingUtilities.getRoot(this)).getActivePanel().isPaused())
+        if(!parent.isPaused() && parent.isRunning())
             tick();
     }
 }
