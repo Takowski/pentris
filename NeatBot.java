@@ -1,27 +1,39 @@
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.io.*;
+import java.util.ArrayList;
 
 public class NeatBot{
-    private static PentWindow window;
-    private static GameCanvas pannel;
+    private PentWindow window;
+    private GameCanvas pannel;
     private String[][] boardS;
     private double[] inputs;
+    private Timer t;
+    private final String POPULATION_FILE = "Population.dat";
+
+    private int genomeNb=0;
+    private Genome currentGenome;
+    private Population population;
 
     private final int SIZE_POPULATION = 100;
     private final int FITNESS_GOAL = 40; //to be adjusted
+
+    private final boolean TRAINING = true;
 
     public static void main(String[] args){
         new NeatBot();
     }
     public void initializeGame(){
+        //currentGenome = population.getGenome(genomeNb);
+        genomeNb++;
         window = new PentWindow(true);
         try{
             Robot b = new Robot();
             if(window.getActivePanel() instanceof GameCanvas){
                 pannel = (GameCanvas)window.getActivePanel();
             }
-            Timer t = pannel.getTimer();
+            t = pannel.getTimer();
             t.addActionListener(new BoardListener());
         }
         catch(AWTException e){
@@ -29,74 +41,13 @@ public class NeatBot{
         }
     }
     public NeatBot(){
+        //if(!loadPopulation(new File(POPULATION_FILE))) population.initialize();
+        //population = new Population(SIZE_POPULATION);
         initializeGame();
-    }
-    //next towo classes, create separate files...
-    private class Genome{
-        private double[][] connections; //[in node (0-76) , out node(hidden: >76; output: -1 - -6), weight of connection]
-        private int fitness;
-
-        public Genome(){
-
-        }
-        public void initialize(){
-
-        }
-        public void setFitness(int score, int time){
-            this.fitness = score/time;
-        }
-        public int getFitness(){
-            return fitness;
-        }
-        public void generateNetwork(){
-
-        }
-        /*public double[] getOutput(){
-            double[] outputs = new double[5];
-            for(int i=0; i<connections.length; i++){
-                if(connections[i][1]>=0){
-                    hiddenNodes[connections[i][1]] += inputs[connections[i][0]] * connections[i][2];
-                }
-                else {
-                    outputs[(-connections[i][1] - 1] += inputs[connections[i][0]] * connections[i][2];
-                    outputs[(-connections[i][1] - 1] = sigmoid(outputs[(-connections[i][1] - 1]);
-                }
-            }
-            return outputs;
-        }
-        private double sigmoid(double value){
-            return value;
-        }*/
-    }
-    private class Population{
-        private Genome[] genomes;
-
-        public Population(){
-            genomes = new Genome[SIZE_POPULATION];
-            for(Genome g: genomes){
-                g = new Genome();
-            }
-        }
-        public Genome getGenome(int n){
-            return genomes[n];
-        }
-        public void CrossOver(Genome g1, Genome g2){
-
-        }
-        private void mutuation(Genome g1){
-
-        }
-        public int getGeneralFitness(){
-            int sumFitness = 0;
-            for(Genome g: genomes){
-                sumFitness += g.getFitness();
-            }
-            return sumFitness/SIZE_POPULATION;
-        }
     }
 
     private void getInputs(){
-        //boardS = board.getBoard();
+        //boardS = pannel.getBoard();
         int posInput = 0;
         for(int i=0; i<boardS.length; i++){
             for(int j=0; j<boardS[0].length; j++){
@@ -105,16 +56,84 @@ public class NeatBot{
             }
         }
     }
-
-    public void train(){
-        Population pop = new Population();
+    public boolean loadPopulation(File x){
+        ObjectInputStream inputStream = null;
+        try{
+            inputStream = new ObjectInputStream(new FileInputStream(x));
+            ArrayList<Genome> genomeList = (ArrayList<Genome>) inputStream.readObject();
+            if(genomeList.size() == SIZE_POPULATION){
+                population.setPopulation(genomeList);
+                return true;
+            }
+            else System.out.println("Size of saved population do not match actual population size...");
+        }
+        catch (FileNotFoundException e){
+            System.out.println("[Load] FNF Error: " + e.getMessage());
+        }
+        catch (IOException e){
+            System.out.println("[Load] IO Error: " + e.getMessage());
+        }
+        catch (ClassNotFoundException e){
+            System.out.println("[Load] CNF Error: " + e.getMessage());
+        }
+        finally {
+            try{
+                if(inputStream != null){
+                    //inputStream.flush();
+                    inputStream.close();
+                }
+            }
+            catch (IOException e){
+            System.out.println("[Load] IO Error: " + e.getMessage());
+            }
+        }
+        return false;
     }
+    public void savePopulation(File x){
+        ObjectOutputStream outputStream = null;
+        try{
+			outputStream = new ObjectOutputStream(new FileOutputStream(x));
+			outputStream.writeObject(population.getPopulationList());
+		}
+		catch (FileNotFoundException e){
+			System.out.println("[Update] FNF Error: " + e.getMessage() + ",the program will try and make a new file");
+		}
+		catch (IOException e){
+			System.out.println("[Update] IO Error: " + e.getMessage());
+		}
+		finally{
+			try{
+				if(outputStream != null){
+					outputStream.flush();
+					outputStream.close();
+				}
+			}
+			catch (IOException e) {
+				System.out.println("[Update] Error: " + e.getMessage());
+			}
+		}
+    }
+
     private class BoardListener implements ActionListener {
         public void actionPerformed(ActionEvent e){
             if(pannel.getGameState()){
-                System.out.println("yey");
+                try{
+                    Robot b = new Robot();
+                    //double[] out = currentGenome.getOutput(pannel.getBoard().getBoard()); //currentGenome to be implemented
+                    double[] out = new double[5];
+                    for(int i=0 ; i<out.length;i++) out[i] = Math.random();
+                    if(out[0] > 0.5) b.keyPress(37);
+                    if(out[1] > 0.5) b.keyPress(38);
+                    if(out[2] > 0.5) b.keyPress(39);
+                    if(out[3] > 0.5) b.keyPress(40);
+                    if(out[4] > 0.5) b.keyRelease(40);
+                }
+                catch(AWTException exception){
+                    exception.printStackTrace();
+                }
             }
             else{
+                //if training: next genome
                 System.out.println("test");
             }
         }
